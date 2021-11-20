@@ -1,48 +1,59 @@
-HEAD = -I includes
+FLAGS = -Wall
 
-.PHONY: all server client clean start_server start_client
+CC = gcc
+# Флаг для библиотеки pthread
+INCLUDES = -I include $(PTHREAD_FLAGS)
+PTHREAD_FLAGS = -lpthread
+# Путь к исполняемым файлам
+BIN_PATH = bin
+# Путь к объектным файлам
+OBJ_PATH = obj
+# Путь к исходным файлам
+SRC_PATH = src
+# Путь к заголовочным файлам
+INCLUDE_PATH = include
 
-all: bin/server bin/client
+SERVER = server
+SOCKET = socket
+CLIENT = client
 
-server: bin/server
+SHELL = /bin/bash
 
-client: bin/client
+all: dirs $(BIN_PATH)/$(SERVER) $(BIN_PATH)/$(CLIENT)
 
-bin/server: obj/socket/socket.o obj/server/server.o obj/server/main.o
-	mkdir -p bin
-	gcc -Wall -o $@ $^
+$(BIN_PATH)/$(SERVER): $(OBJ_PATH)/$(SOCKET).o $(OBJ_PATH)/$(SERVER).o $(OBJ_PATH)/$(SERVER)/main.o
+	gcc $(FLAGS) -o $@ $^ $(PTHREAD_FLAGS)
 
-obj/socket/socket.o: src/socket/create_socket.c includes/create_socket.h
-	mkdir -p obj
-	mkdir -p obj/socket
-	gcc -Wall -o $@ -c src/socket/create_socket.c $(HEAD) -lpthread
+$(OBJ_PATH)/$(SOCKET).o: $(SRC_PATH)/$(SOCKET)/create_socket.c $(INCLUDE_PATH)/create_socket.h
+	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(SOCKET)/create_socket.c $(INCLUDES)
 #--------------------------------------------
 
-obj/server/server.o: src/server/server.c includes/server.h includes/create_socket.h
-	mkdir -p obj/server
-	gcc -Wall -o $@ -c src/server/server.c $(HEAD) -lpthread
+$(OBJ_PATH)/$(SERVER).o: $(SRC_PATH)/$(SERVER)/$(SERVER).c $(INCLUDE_PATH)/$(SERVER).h $(INCLUDE_PATH)/create_socket.h
+	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(SERVER)/$(SERVER).c $(INCLUDES)
 
-obj/server/main.o: src/server/main.c includes/server.h includes/create_socket.h
-	gcc -Wall -o $@ -c src/server/main.c $(HEAD) -lpthread
+$(OBJ_PATH)/$(SERVER)/main.o: $(SRC_PATH)/$(SERVER)/main.c $(INCLUDE_PATH)/$(SERVER).h $(INCLUDE_PATH)/create_socket.h
+	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(SERVER)/main.c $(INCLUDES)
 #--------------------------------------------
 
-bin/client: obj/socket/socket.o obj/client/client.o obj/client/main.o
-	mkdir -p bin
-	gcc -Wall -o $@ $^
+$(BIN_PATH)/$(CLIENT): $(OBJ_PATH)/$(SOCKET).o $(OBJ_PATH)/$(CLIENT).o $(OBJ_PATH)/$(CLIENT)/main.o
+	gcc $(FLAGS) -o $@ $^
 
-obj/client/client.o: src/client/client.c includes/client.h includes/create_socket.h
-	mkdir -p obj/client
-	gcc -Wall -o $@ -c src/client/client.c $(HEAD) -lpthread
+$(OBJ_PATH)/$(CLIENT).o: $(SRC_PATH)/$(CLIENT)/$(CLIENT).c $(INCLUDE_PATH)/$(CLIENT).h $(INCLUDE_PATH)/create_socket.h
+	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(CLIENT)/$(CLIENT).c $(INCLUDES)
 
-obj/client/main.o: src/client/main.c includes/client.h includes/create_socket.h
-	gcc -Wall -o $@ -c src/client/main.c $(HEAD) -lpthread
-#--------------------------------------------
+$(OBJ_PATH)/$(CLIENT)/main.o: $(SRC_PATH)/$(CLIENT)/main.c $(INCLUDE_PATH)/$(CLIENT).h $(INCLUDE_PATH)/create_socket.h
+	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(CLIENT)/main.c $(INCLUDES)
 
-clean:
-	rm -rf obj bin
+dirs:
+	@mkdir -p $(BIN_PATH)
+	@mkdir -p $(OBJ_PATH)/$(CLIENT)
+	@mkdir -p $(OBJ_PATH)/$(SERVER)
 
 start_client:
-	./bin/client
+	./$(BIN_PATH)/$(CLIENT)
 
 start_server:
-	./bin/server
+	./$(BIN_PATH)/$(SERVER)
+
+clean:
+	$(RM) -r $(BIN_PATH) $(OBJ_PATH)
