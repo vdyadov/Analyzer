@@ -1,9 +1,9 @@
 #include "client.h"
 
-int main(int argc, char const **argv)
+int main(int argc, char *argv[])
 {
     system("clear");
-    client();
+    client(argc, argv);
 
     return 0;
 }

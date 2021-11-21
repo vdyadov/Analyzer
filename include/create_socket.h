@@ -31,7 +31,7 @@ enum {
 
 //#include "decoder_packet.h"
 
-int create_socket_clientTCP(int client_port);
+int create_socket_clientTCP(int client_port, char *server_ip);
 //int cr_socket_clientUDP();
 //int cr_socket_clientACMP();
 

@@ -1,10 +1,10 @@
 #include <client_structs.h>
 
-int create_packet_rtt(struct Packet_rtt *rtt_pack, int lenght)
+int create_packet_rtt(struct Packet_rtt *rtt_pack, int size)
 {
     int ret = 0;
 
-    rtt_pack->id_pack = ++id;
+    rtt_pack->id_packet = ++id;
     rtt_pack->payload = malloc(size * sizeof(char));
 
     if (NULL == rtt_pack->payload)
@@ -14,7 +14,7 @@ int create_packet_rtt(struct Packet_rtt *rtt_pack, int lenght)
         goto finally;
     }
 
-    for (int i = 0; i < lenght; i++)
+    for (int i = 0; i < size; i++)
     {
         rtt_pack->payload[i] = i;
     }
@@ -24,11 +24,11 @@ int create_packet_rtt(struct Packet_rtt *rtt_pack, int lenght)
     return ret;
 }
 
-int create_packet_lose(struct Packet_lose *lose_pack, int round, int lenght)
+int create_packet_lose(struct Packet_lose *lose_pack, int round, int size)
 {
     int ret = 0;
     
-    lose_pack->id_pack = ++id;
+    lose_pack->id_packet = ++id;
     lose_pack->id_round = round;
     lose_pack->payload = malloc(size * sizeof(char));
 
@@ -39,7 +39,7 @@ int create_packet_lose(struct Packet_lose *lose_pack, int round, int lenght)
         goto finally;
     }
 
-    for (int i = 0; i < lenght; i++)
+    for (int i = 0; i < size; i++)
     {
         lose_pack->payload[i] = i;
     }

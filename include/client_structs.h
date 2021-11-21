@@ -24,7 +24,7 @@ typedef struct Struct_lose_packet
     uint64_t client_send_time;
     uint16_t id_round;
     uint16_t id_packet;
-} Struct_lose_p acket;
+} Struct_lose_packet;
 
 typedef struct Packet_lose
 {
