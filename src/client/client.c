@@ -1,4 +1,4 @@
-#include "client.h"
+#include "../../include/client.h"
 
 /** client -n 1 -s 1024 -c 100 -t 60 -ip 127.0.0.1
 *   n - номер теста
@@ -11,8 +11,10 @@
 int client(int argc, char *argv[])
 {
 
-    int client_port = 8888;
-    struct packet send_packet;
+    int client_port = 5000;
+    int server_ip = 0;
+    struct packet send_packet, recv_packet;
+    int length = sizeof(recv_packet);
 
     char *str_number_test = NULL;
     char *str_size_packet = NULL;
@@ -60,7 +62,7 @@ int client(int argc, char *argv[])
     {
         str_number_test = malloc(3);
         printf("Введите номер теста: ");
-        fgets(str_number_test, 3, stdin);
+        fgets(str_number_test, 4, stdin);
         number_test = atoi(str_number_test);
         free(str_number_test);
     }
@@ -95,37 +97,38 @@ int client(int argc, char *argv[])
         fgets(str_server_ip, 16, stdin);
     }
 
-    int type_packet = 0;
-
-    if (1 == number_test || 2 == number_test)
-    {
-        type_packet = UDP;
-    }
+    server_ip = ntohl(inet_addr(str_server_ip));
 
 //Заполняем пакет
+    if (3 == number_test)
+    {
+        send_packet.type_packet = TCP;
+    }
+    else
+    {
+        send_packet.type_packet = UDP;
+    }
     send_packet.size_packet = size_packet;
-    send_packet.type_packet = type_packet;
-    send_packet.number_packet = 1;
-    send_packet.ip_client = INADDR_LOOPBACK;
+    send_packet.ip_client = server_ip;
     send_packet.port_client = client_port;
     send_packet.number_test = number_test;
+    send_packet.count_packet = count_packet;
 
 //Создаём сокет
     int sock;
 
-    sock = create_socket_clientTCP(client_port, str_server_ip);
-
-    while (sock < 0 || client_port == 8897)
-    {
-        client_port++;
-        send_packet.port_client = client_port;
-        sock = create_socket_clientTCP(client_port, str_server_ip);
-    }
+    sock = create_socket_clientTCP(client_port, server_ip);
 
 //Пересылка пакета
     if(sock >= 0) {
         send(sock, (char *)&send_packet, sizeof(send_packet), 0);
+        while(length)
+        {
+            length -= recv(sock, (char *)(&recv_packet + sizeof(recv_packet) - length), length, 0);
+        }
     }
+
+    packet_handler_client(&recv_packet);
 
     free(str_server_ip);
     close(sock);

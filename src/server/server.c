@@ -1,4 +1,4 @@
-#include "server.h"
+#include "../../include/server.h"
 
 
 
@@ -7,11 +7,13 @@ void *comand_work(struct server_arg* parameters)
 
     int sock, listener;
 
-    struct packet recv_packet;
+    struct packet send_packet, recv_packet;
 
     int length = sizeof(recv_packet);
     while (1)
     {
+        length = sizeof(recv_packet);
+
         listener = create_socket_serverTCP(parameters->server_port);
         if (listener < 0)
         {
@@ -23,10 +25,11 @@ void *comand_work(struct server_arg* parameters)
         if (sock < 0)
         {
             perror("server_accept");
-//            exit(3);
             close(listener);
             continue;
         }
+
+        // printf("lenght = %d\n", length);
 
         while(length)
         {
@@ -35,10 +38,19 @@ void *comand_work(struct server_arg* parameters)
 
         printf("\nlong_packet: %"PRIu32"\n", recv_packet.size_packet);
         printf("type_packet: %"PRIu16"\n", recv_packet.type_packet);
-        printf("number_packet: %"PRIu32"\n", recv_packet.number_packet);
         printf("in_addr: %"PRIu32"\n", recv_packet.ip_client);
         printf("port: %"PRIu16"\n", recv_packet.port_client);
         printf("number_test: %"PRIu16"\n", recv_packet.number_test);
+
+
+        send_packet = recv_packet;
+        send_packet.port_client += 9;
+
+        send(sock, (char *)&send_packet, sizeof(send_packet), 0);
+
+        packet_handler_server(&send_packet);
+
+        usleep(20000);
 
         close(sock);
     }
@@ -55,7 +67,7 @@ int server()
     for (int i = 0; i < 8; i++)
     {
         th_params[i].number = i;
-        th_params[i].server_port = 8888 + i;
+        th_params[i].server_port = 5000 + i;
     }
 
     for (int i = 0; i < 8; i++)
