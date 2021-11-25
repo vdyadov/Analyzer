@@ -1,37 +1,38 @@
-#ifndef SERVER_STRUCTS_H
-#define SERVER_STRUCTS_H
+#ifndef _SERVER_STRUCTS_H_
+#define _SERVER_STRUCTS_H_
 
 #include <stdint.h>
 
 typedef struct Struct_rtt
-{ 
-    uint64_t server_recv_time;
-    uint64_t server_send_time;
-    uint16_t n_packet;
-} Struct_rtt;
-
-typedef struct Packet_rtt
 {
-    uint16_t n_packet;
-    char *payload;
-} Packet_rtt;
+    uint64_t latency_time;
+    uint16_t id_packet;
+} __attribute__((packed)) Struct_rtt; 
 
-typedef struct Struct_lose_packet
+typedef struct Info_rtt
 {
-    uint64_t server_recv_time;
-    uint16_t n_round;
-    uint16_t n_packet;
-} Struct_lose_packet;
+    int size;
+    int count_packet;
+} __attribute__((packed)) Info_rtt;
 
 typedef struct Packet_lose
 {
-    uint16_t n_round;
-    uint16_t n_packet;
+    uint16_t id_round;
+    uint16_t id_packet;
     char *payload;
-} Packet_lose;
+} __attribute__((packed)) Packet_lose; 
 
-int set_packet_rtt(Packet_rtt *, int, char *);
+typedef struct Info_lose
+{
+    int size;
+    int count_packet;
+} __attribute__((packed)) Info_lose;
 
-int set_packet_lose(Packet_lose *, int, int, char *);
+typedef struct Statistic_lose
+{
+    uint16_t id_round;
+    uint16_t id_packet;
+    uint64_t recv_time;
+} __attribute__((packed)) Statistic_lose;
 
-#endif /* SERVER_STRUCTS_H */
+#endif /* _SERVER_STRUCTS_H_ */

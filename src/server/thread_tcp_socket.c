@@ -10,7 +10,7 @@
 #include "tcp_command_processor.h"
 
 
-#define MAX_NUM_CLIENTS 3
+#define MAX_NUM_CLIENTS 8
 
 
 typedef enum Pthread_join_block
@@ -362,10 +362,8 @@ static void *thr_tcp_socket(void *args)
     printf("\n******* Thread: %ld\n", c_s_thr->tid_comm_sock);
     print_socket_info(c_s_thr->cli_sock);
 
-    //echo_receiver(c_s_thr->cli_sock);
-
-    // Receive data from the Maxim's client
-    receive_one_struct_packet(c_s_thr->cli_sock);
+    // Receive data from the client and starting packet_handler
+    receive_wexec_packet_handler(c_s_thr->cli_sock);
 
     return c_s_thr->thr_node;
 }

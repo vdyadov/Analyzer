@@ -1,6 +1,7 @@
 EXEC_SERVER := server
 EXEC_CLIENT := client
 TARGET_SOCKET := socket
+TARGET_HANDLER := packet_handler
 
 CC := gcc
 CFLAGS = -Wall -Wextra -pthread
@@ -26,6 +27,9 @@ OBJ_CLIENT := $(SRC_CLIENT:$(SRC_DIR)/$(EXEC_CLIENT)/%.c=$(OBJ_DIR)/$(EXEC_CLIEN
 SRC_SOCKET := $(wildcard $(SRC_DIR)/$(TARGET_SOCKET)/*.c)
 OBJ_SOCKET := $(SRC_SOCKET:$(SRC_DIR)/$(TARGET_SOCKET)/%.c=$(OBJ_DIR)/$(TARGET_SOCKET)/%.o)
 
+SRC_HANDLER := $(wildcard $(SRC_DIR)/$(TARGET_HANDLER)/*.c)
+OBJ_HANDLER := $(SRC_HANDLER:$(SRC_DIR)/$(TARGET_HANDLER)/%.c=$(OBJ_DIR)/$(TARGET_HANDLER)/%.o)
+
 INCFLAG := $(addprefix -I,$(INCLUDE_DIR))
 
 #$(info SRC_SERVER="$(SRC_SERVER)")
@@ -35,6 +39,8 @@ INCFLAG := $(addprefix -I,$(INCLUDE_DIR))
 #$(info OBJ_CLIENT="$(OBJ_CLIENT)")
 #$(info SRC_SOCKET="$(SRC_SOCKET)")
 #$(info OBJ_SOCKET="$(OBJ_SOCKET)")
+#$(info SRC_HANDLER="$(SRC_HANDLER)")
+#$(info OBJ_HANDLER="$(OBJ_HANDLER)")
 
 
 .PHONY: all dirs clean start_server start_client
@@ -44,7 +50,7 @@ all: dirs $(BIN_DIR)/$(EXEC_SERVER) $(BIN_DIR)/$(EXEC_CLIENT)
 
 #------------------- Server
 
-$(BIN_DIR)/$(EXEC_SERVER): $(OBJ_SERVER) $(OBJ_SERVER)
+$(BIN_DIR)/$(EXEC_SERVER): $(OBJ_SERVER) $(OBJ_SOCKET) $(OBJ_HANDLER)
 		$(CC) $^ -o $@ $(LDFLAGS)
 
 $(OBJ_DIR)/$(EXEC_SERVER)/%.o: $(SRC_DIR)/$(EXEC_SERVER)/%.c
@@ -52,7 +58,7 @@ $(OBJ_DIR)/$(EXEC_SERVER)/%.o: $(SRC_DIR)/$(EXEC_SERVER)/%.c
 
 #------------------- Client
 
-$(BIN_DIR)/$(EXEC_CLIENT): $(OBJ_CLIENT) $(OBJ_SOCKET)
+$(BIN_DIR)/$(EXEC_CLIENT): $(OBJ_CLIENT) $(OBJ_SOCKET) $(OBJ_HANDLER)
 		$(CC) $^ -o $@ $(LDFLAGS)
 
 $(OBJ_DIR)/$(EXEC_CLIENT)/%.o: $(SRC_DIR)/$(EXEC_CLIENT)/%.c
@@ -63,20 +69,27 @@ $(OBJ_DIR)/$(EXEC_CLIENT)/%.o: $(SRC_DIR)/$(EXEC_CLIENT)/%.c
 $(OBJ_DIR)/$(TARGET_SOCKET)/%.o: $(SRC_DIR)/$(TARGET_SOCKET)/%.c
 		$(CC) $(CFLAGS) -c $< -o $@ $(INCFLAG)
 
+#------------------- Handler
+
+$(OBJ_DIR)/$(TARGET_HANDLER)/%.o: $(SRC_DIR)/$(TARGET_HANDLER)/%.c
+		$(CC) $(CFLAGS) -c $< -o $@ $(INCFLAG)
+
 #-------------------
+
 
 dirs:
 		@mkdir -p $(BIN_DIR)
 		@mkdir -p $(OBJ_DIR)/$(EXEC_SERVER)
 		@mkdir -p $(OBJ_DIR)/$(EXEC_CLIENT)
 		@mkdir -p $(OBJ_DIR)/$(TARGET_SOCKET)
+		@mkdir -p $(OBJ_DIR)/$(TARGET_HANDLER)
 
 start_client:
-		./$(BIN_DIR)/$(EXEC_CLIENT)
+		$(BIN_DIR)/$(EXEC_CLIENT)
 
 start_server:
 		@clear
-		./$(BIN_DIR)/$(EXEC_SERVER) $(filter-out $@,$(MAKECMDGOALS))
+		$(BIN_DIR)/$(EXEC_SERVER) $(filter-out $@,$(MAKECMDGOALS))
 %:
 		@:
 

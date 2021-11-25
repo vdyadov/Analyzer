@@ -1,40 +1,68 @@
-#ifndef CLIENT_STRUCTS_H
-#define CLIENT_STRUCTS_H
+#ifndef _CLIENT_STRUCTS_H_
+#define _CLIENT_STRUCTS_H_
 
-#include <stdint.h>
-#include <malloc.h>
-
-int id = 0;
+#include <inttypes.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
 typedef struct Struct_rtt
 { 
-    uint64_t client_recv_time;
-    uint64_t client_send_time;
+    double client_recv_time;
+    double client_send_time;
+    double latency_time;
     uint16_t id_packet;
-} Struct_rtt; 
+} __attribute__((packed)) Struct_rtt; 
 
 typedef struct Packet_rtt
 {
     uint16_t id_packet;
     char *payload;
-} Packet_rtt; 
+} __attribute__((packed)) Packet_rtt; 
+
+typedef struct Info_rtt
+{
+    int size;
+    int count_packet;
+} __attribute__((packed)) Info_rtt;
+
+typedef struct Statistic_rtt
+{
+    uint16_t id_packet;
+    uint64_t latency_time;
+} __attribute__((packed)) Statistic_rtt;
 
 typedef struct Struct_lose_packet
 {
     uint64_t client_send_time;
     uint16_t id_round;
     uint16_t id_packet;
-} Struct_lose_packet;
+} __attribute__((packed)) Struct_lose_packet;
 
 typedef struct Packet_lose
 {
     uint16_t id_round;
     uint16_t id_packet;
     char *payload;
-} Packet_lose; 
+} __attribute__((packed)) Packet_lose; 
 
-int create_packet_rtt(Packet_rtt *, int);
+typedef struct Info_lose
+{
+    int size;
+    int count_packet;
+} __attribute__((packed)) Info_lose;
 
-int create_packet_lose(Packet_lose *, int, int);
+typedef struct Statistic_lose
+{
+    uint16_t id_round;
+    uint16_t id_packet;
+    uint64_t recv_time;
+} __attribute__((packed)) Statistic_lose;
 
-#endif /* CLIENT_STRUCTS_H */
+int create_packet_rtt(struct Packet_rtt *rtt_pack, int id, int size);
+
+int create_packet_lose(struct Packet_lose *lose_pack, int round, int id_packet, int size);
+
+double get_cur_time_ms();
+
+#endif /* _CLIENT_STRUCTS_H_ */

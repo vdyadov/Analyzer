@@ -1,3 +1,8 @@
-#include "create_socket.h"
+#ifndef _CLIENT_H_
+#define _CLIENT_H_
 
-int client();
+
+int client(int argc, char *argv[]);
+
+
+#endif
