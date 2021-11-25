@@ -1,72 +1,130 @@
-#include "server.h"
+#include "definitions.h"
+#include "thread_tcp_socket.h"
 
 
+#define LISTEN_QUEUE_LEN 5
 
-void *comand_work(struct server_arg* parameters)
+
+/** Extern public global variables.
+ * Volatile flag for Ctr-C cansel thread.
+ * Set non-zero after SIGINT.
+ */
+extern volatile sig_atomic_t stop_all_thr;
+
+
+/** Interrupt threads on a signal SIGINT
+ */
+static void handler()
 {
-
-    int sock, listener;
-
-    struct packet recv_packet;
-
-    int length = sizeof(recv_packet);
-    while (1)
-    {
-        listener = create_socket_serverTCP(parameters->server_port);
-        if (listener < 0)
-        {
-            continue;
-        }
-        sock = accept(listener, NULL, NULL);
-        close(listener);
-
-        if (sock < 0)
-        {
-            perror("server_accept");
-//            exit(3);
-            close(listener);
-            continue;
-        }
-
-        while(length)
-        {
-            length -= recv(sock, (char *)(&recv_packet + sizeof(recv_packet) - length), length, 0);
-        }
-
-        printf("\nlong_packet: %"PRIu32"\n", recv_packet.size_packet);
-        printf("type_packet: %"PRIu16"\n", recv_packet.type_packet);
-        printf("number_packet: %"PRIu32"\n", recv_packet.number_packet);
-        printf("in_addr: %"PRIu32"\n", recv_packet.ip_client);
-        printf("port: %"PRIu16"\n", recv_packet.port_client);
-        printf("number_test: %"PRIu16"\n", recv_packet.number_test);
-
-        close(sock);
-    }
-
-    return 0;
-
+    stop_all_thr = 1;
 }
 
-int server()
+
+int main(int argc, char *argv[])
 {
-    pthread_t th[8];
-    struct server_arg th_params[8];
+    int ret = 0;
+    int fd_soc = -1;
 
-    for (int i = 0; i < 8; i++)
-    {
-        th_params[i].number = i;
-        th_params[i].server_port = 8888 + i;
+    struct sockaddr_in server_in = {0};
+    int server_num_port = 0;
+    //struct in_addr addr = {0};
+
+    // Signals
+    struct sigaction sa = {0};
+
+
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <server_port>\n", argv[0]);
+        ret = EXIT_FAILURE;
+        goto finally;
     }
 
-    for (int i = 0; i < 8; i++)
+    server_num_port = atoi(argv[1]);
+
+    if (server_num_port < 1024 || server_num_port > 49151)
     {
-        pthread_create(th + i, NULL, comand_work, th_params + i);
+        fprintf(stderr, "Invalid port number (must be in the range: 1024-49151)\n");
+        fprintf(stderr, "Usage: %s <server_port> <server_address_IPv4>\n", argv[0]);
+        ret = EXIT_FAILURE;
+        goto finally;
     }
 
-    for (int i = 0; i < 8; i++)
+/*
+    if (0 == inet_aton(argv[2], &addr))
     {
-        pthread_join(th[i], NULL);
+        fprintf(stderr, "Invalid IP_v4 address (must be xxx.xxx.xxx.xxx)\n");
+        fprintf(stderr, "Usage: %s <server_port> <server_address_IPv4>\n", argv[0]);
+        ret = EXIT_FAILURE;
+        goto finally;
+    }
+*/
+
+    memset(&server_in, 0, sizeof(struct sockaddr_in));
+    server_in.sin_family = AF_INET;
+    server_in.sin_port = htons(server_num_port);
+    //server_in.sin_addr.s_addr = addr.s_addr;
+    server_in.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    fd_soc = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (-1 == fd_soc)
+    {
+        perror("Error in socket(...)");
+        ret = EXIT_FAILURE;
+        goto finally;
     }
 
-    return 0;
+    int opt_val = 1;
+    if (-1 == setsockopt(fd_soc, SOL_SOCKET, SO_KEEPALIVE, &opt_val, sizeof(opt_val)))
+    {
+        perror("Error in setsockopt(...) for SO_KEEPALIVE");
+        ret = EXIT_FAILURE;
+        goto finally;
+    }
+
+    if (-1 == setsockopt(fd_soc, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof(opt_val)))
+    {
+        perror("Error in setsockopt(...) for SO_REUSEADDR");
+        ret = EXIT_FAILURE;
+        goto finally;
+    }
+
+    if (-1 == bind(fd_soc, (struct sockaddr *)&server_in, sizeof(struct sockaddr_in)))
+    {
+        perror("Error in bind(...)");
+        ret = EXIT_FAILURE;
+        goto finally;
+    }
+
+    if (-1 == listen(fd_soc, LISTEN_QUEUE_LEN))
+    {
+        perror("Error in listen(...)");
+        ret = EXIT_FAILURE;
+        goto finally;
+    }
+
+    puts("Binding OK! Port listen!");
+
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sa.sa_handler = handler;
+
+    if (-1 == sigaction(SIGINT, &sa, NULL))
+    {
+        perror("Error in sigaction(...)");
+        ret = EXIT_FAILURE;
+        goto finally;
+    }
+
+    ret = connect_clients(fd_soc);
+
+ finally:
+
+    if (-1 != fd_soc)
+    {
+        shutdown(fd_soc, SHUT_RDWR);
+        close(fd_soc);
+        fd_soc = -1;
+    }
+
+    return ret;
 }

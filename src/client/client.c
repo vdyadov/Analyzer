@@ -11,7 +11,9 @@
 int client(int argc, char *argv[])
 {
 
-    int client_port = 8888;
+    int client_port = 15200;
+    //int client_port = 8888;
+
     struct packet send_packet;
 
     char *str_number_test = NULL;
@@ -24,6 +26,9 @@ int client(int argc, char *argv[])
     int size_packet = 0;
     int count_packet = 0;
     int time_test = 0;
+
+    puts("Attention! Для того, чтобы клиент заработал, установи на сервере"
+            " слушающий (listen) порт из диапазона: 15200 - 15207\n\n");
 
     // Обработка аргументов от пользователя
     for (int i = 1; i < argc; i += 2) 
@@ -59,7 +64,11 @@ int client(int argc, char *argv[])
     if (NULL == str_number_test)
     {
         str_number_test = malloc(3);
-        printf("Введите номер теста: ");
+        printf("Тесты:\n"
+                "\t 1 - нарушение последовательности передачи пакетов\n"
+                "\t 2 - тест RTT\n"
+                "\t 3 - остаточная полоса канала (100%% загрузка)\n"
+                "Введите номер теста: ");
         fgets(str_number_test, 3, stdin);
         number_test = atoi(str_number_test);
         free(str_number_test);
@@ -67,7 +76,7 @@ int client(int argc, char *argv[])
     if (NULL == str_size_packet)
     {
         str_size_packet = malloc(10);
-        printf("Введите размер пакета: ");
+        printf("Введите размер пакета (64, 128, 256, 512, 1024, 1280, 1518): ");
         fgets(str_size_packet, 10, stdin);
         size_packet = atoi(str_size_packet);
         free(str_size_packet);
@@ -83,7 +92,7 @@ int client(int argc, char *argv[])
     if (3 == number_test && NULL == str_time_test)
     {
         str_time_test = malloc(10);
-        printf("Введите время теста: ");
+        printf("Введите время теста в секундах: ");
         fgets(str_time_test, 10, stdin);
         time_test = atoi(str_time_test);
         free(str_time_test);
@@ -91,7 +100,7 @@ int client(int argc, char *argv[])
     if (NULL == str_server_ip)
     {
         str_server_ip = malloc(16);
-        printf("Введите IP-адрес сервера: ");
+        printf("Введите IPv4-адрес сервера в формате xxx.xxx.xxx.xxx: ");
         fgets(str_server_ip, 16, stdin);
     }
 
@@ -111,19 +120,26 @@ int client(int argc, char *argv[])
     send_packet.number_test = number_test;
 
 //Создаём сокет
-    int sock;
+    int sock = -1;
+
+    printf("\nAttempt to connect to the server port: %d\n", client_port);
 
     sock = create_socket_clientTCP(client_port, str_server_ip);
 
-    while (sock < 0 || client_port == 8897)
+    while (sock < 0 && client_port < 15207)
     {
         client_port++;
+
+        printf("\nAttempt to connect to the server port: %d\n", client_port);
+
         send_packet.port_client = client_port;
         sock = create_socket_clientTCP(client_port, str_server_ip);
     }
 
 //Пересылка пакета
     if(sock >= 0) {
+        printf("The connection with the server on the port %d is successful!\n"
+                "Sending data!\n", client_port);
         send(sock, (char *)&send_packet, sizeof(send_packet), 0);
     }
 

@@ -1,59 +1,84 @@
-FLAGS = -Wall
+EXEC_SERVER := server
+EXEC_CLIENT := client
+TARGET_SOCKET := socket
 
-CC = gcc
-# Флаг для библиотеки pthread
-INCLUDES = -I include $(PTHREAD_FLAGS)
-PTHREAD_FLAGS = -lpthread
-# Путь к исполняемым файлам
-BIN_PATH = bin
-# Путь к объектным файлам
-OBJ_PATH = obj
-# Путь к исходным файлам
-SRC_PATH = src
-# Путь к заголовочным файлам
-INCLUDE_PATH = include
-
-SERVER = server
-SOCKET = socket
-CLIENT = client
+CC := gcc
+CFLAGS = -Wall -Wextra -pthread
+LDFLAGS = -lpthread#-ldl
 
 SHELL = /bin/bash
 
-all: dirs $(BIN_PATH)/$(SERVER) $(BIN_PATH)/$(CLIENT)
+# Bin
+BIN_DIR = ./bin
+# Obj
+OBJ_DIR = ./obj
+# Src
+SRC_DIR = ./src
+# Headers
+INCLUDE_DIR = ./include
 
-$(BIN_PATH)/$(SERVER): $(OBJ_PATH)/$(SOCKET).o $(OBJ_PATH)/$(SERVER).o $(OBJ_PATH)/$(SERVER)/main.o
-	gcc $(FLAGS) -o $@ $^ $(PTHREAD_FLAGS)
+SRC_SERVER := $(wildcard $(SRC_DIR)/$(EXEC_SERVER)/*.c)
+OBJ_SERVER := $(SRC_SERVER:$(SRC_DIR)/$(EXEC_SERVER)/%.c=$(OBJ_DIR)/$(EXEC_SERVER)/%.o)
 
-$(OBJ_PATH)/$(SOCKET).o: $(SRC_PATH)/$(SOCKET)/create_socket.c $(INCLUDE_PATH)/create_socket.h
-	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(SOCKET)/create_socket.c $(INCLUDES)
-#--------------------------------------------
+SRC_CLIENT := $(wildcard $(SRC_DIR)/$(EXEC_CLIENT)/*.c)
+OBJ_CLIENT := $(SRC_CLIENT:$(SRC_DIR)/$(EXEC_CLIENT)/%.c=$(OBJ_DIR)/$(EXEC_CLIENT)/%.o)
 
-$(OBJ_PATH)/$(SERVER).o: $(SRC_PATH)/$(SERVER)/$(SERVER).c $(INCLUDE_PATH)/$(SERVER).h $(INCLUDE_PATH)/create_socket.h
-	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(SERVER)/$(SERVER).c $(INCLUDES)
+SRC_SOCKET := $(wildcard $(SRC_DIR)/$(TARGET_SOCKET)/*.c)
+OBJ_SOCKET := $(SRC_SOCKET:$(SRC_DIR)/$(TARGET_SOCKET)/%.c=$(OBJ_DIR)/$(TARGET_SOCKET)/%.o)
 
-$(OBJ_PATH)/$(SERVER)/main.o: $(SRC_PATH)/$(SERVER)/main.c $(INCLUDE_PATH)/$(SERVER).h $(INCLUDE_PATH)/create_socket.h
-	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(SERVER)/main.c $(INCLUDES)
-#--------------------------------------------
+INCFLAG := $(addprefix -I,$(INCLUDE_DIR))
 
-$(BIN_PATH)/$(CLIENT): $(OBJ_PATH)/$(SOCKET).o $(OBJ_PATH)/$(CLIENT).o $(OBJ_PATH)/$(CLIENT)/main.o
-	gcc $(FLAGS) -o $@ $^
+#$(info SRC_SERVER="$(SRC_SERVER)")
+#$(info OBJ_SERVER="$(OBJ_SERVER)")
+#$(info INCFLAG="$(INCFLAG)")
+#$(info SRC_CLIENT="$(SRC_CLIENT)")
+#$(info OBJ_CLIENT="$(OBJ_CLIENT)")
+#$(info SRC_SOCKET="$(SRC_SOCKET)")
+#$(info OBJ_SOCKET="$(OBJ_SOCKET)")
 
-$(OBJ_PATH)/$(CLIENT).o: $(SRC_PATH)/$(CLIENT)/$(CLIENT).c $(INCLUDE_PATH)/$(CLIENT).h $(INCLUDE_PATH)/create_socket.h
-	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(CLIENT)/$(CLIENT).c $(INCLUDES)
 
-$(OBJ_PATH)/$(CLIENT)/main.o: $(SRC_PATH)/$(CLIENT)/main.c $(INCLUDE_PATH)/$(CLIENT).h $(INCLUDE_PATH)/create_socket.h
-	gcc $(FLAGS) -o $@ -c $(SRC_PATH)/$(CLIENT)/main.c $(INCLUDES)
+.PHONY: all dirs clean start_server start_client
+
+
+all: dirs $(BIN_DIR)/$(EXEC_SERVER) $(BIN_DIR)/$(EXEC_CLIENT)
+
+#------------------- Server
+
+$(BIN_DIR)/$(EXEC_SERVER): $(OBJ_SERVER) $(OBJ_SERVER)
+		$(CC) $^ -o $@ $(LDFLAGS)
+
+$(OBJ_DIR)/$(EXEC_SERVER)/%.o: $(SRC_DIR)/$(EXEC_SERVER)/%.c
+		$(CC) $(CFLAGS) -c $< -o $@ $(INCFLAG)
+
+#------------------- Client
+
+$(BIN_DIR)/$(EXEC_CLIENT): $(OBJ_CLIENT) $(OBJ_SOCKET)
+		$(CC) $^ -o $@ $(LDFLAGS)
+
+$(OBJ_DIR)/$(EXEC_CLIENT)/%.o: $(SRC_DIR)/$(EXEC_CLIENT)/%.c
+		$(CC) $(CFLAGS) -c $< -o $@ $(INCFLAG)
+
+#------------------- Socket
+
+$(OBJ_DIR)/$(TARGET_SOCKET)/%.o: $(SRC_DIR)/$(TARGET_SOCKET)/%.c
+		$(CC) $(CFLAGS) -c $< -o $@ $(INCFLAG)
+
+#-------------------
 
 dirs:
-	@mkdir -p $(BIN_PATH)
-	@mkdir -p $(OBJ_PATH)/$(CLIENT)
-	@mkdir -p $(OBJ_PATH)/$(SERVER)
+		@mkdir -p $(BIN_DIR)
+		@mkdir -p $(OBJ_DIR)/$(EXEC_SERVER)
+		@mkdir -p $(OBJ_DIR)/$(EXEC_CLIENT)
+		@mkdir -p $(OBJ_DIR)/$(TARGET_SOCKET)
 
 start_client:
-	./$(BIN_PATH)/$(CLIENT)
+		./$(BIN_DIR)/$(EXEC_CLIENT)
 
 start_server:
-	./$(BIN_PATH)/$(SERVER)
+		@clear
+		./$(BIN_DIR)/$(EXEC_SERVER) $(filter-out $@,$(MAKECMDGOALS))
+%:
+		@:
 
 clean:
-	$(RM) -r $(BIN_PATH) $(OBJ_PATH)
+		rm -rf $(BIN_DIR) $(OBJ_DIR)
