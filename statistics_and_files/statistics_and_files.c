@@ -1,6 +1,6 @@
 #include "statistics_and_files.h"
 
-int statistics_and_files(struct stat *statistic, int size, char *name)
+int statistics_and_files(struct Static_rtt *statistic, int size, char *name)
 {
 
     FILE *fd;
@@ -12,7 +12,7 @@ int statistics_and_files(struct stat *statistic, int size, char *name)
 
     fd = fopen(file_name, "w");
 
-    fprintf(fd, "{\n\t\"statistic\": [\n");
+    fprintf(fd, "{\n\t\"name\": \"%s\",\n\t\"statistic\": [\n", name);
 
     for (int i = 0; i < size; i++)
     {

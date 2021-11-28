@@ -13,4 +13,4 @@ main.o: main.c statistics_and_files.h
 	gcc -Wall -o main.o -c main.c
 
 clean:
-	rm -r *.o main
+	rm -r *.o *.json main

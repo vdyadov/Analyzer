@@ -4,7 +4,7 @@
 
 int main() {
 
-    struct stat statistic[10];
+    struct Static_rtt statistic[10];
     srand(time(NULL));
     char name[] = "test";
 
